@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>نظام مبايعات السيارات</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">نظام مبايعات السيارات</div>
+  <div class="userbox" id="userbox" style="display:none">المستخدم: <b id="userName">—</b> | الدور: <b id="userRole">—</b> <button class="btn secondary" id="logoutBtn" style="margin-right:12px">خروج</button></div>
+</header>
+<div class="layout">
+<aside id="sidebar" style="display:none">
+  <div class="nav">
+    <button data-page="dashboard" class="active">لوحة التحكم</button>
+    <button data-page="newSale" id="navNewSale">مبايعة جديدة</button>
+    <button data-page="sales">المبايعات</button>
+    <button data-page="approvals">الاعتمادات</button>
+    <button data-page="users" id="navUsers">المستخدمون</button>
+    <button data-page="audit" id="navAudit">سجل التدقيق</button>
+    <button data-page="settings">الإعدادات</button>
+  </div>
+</aside>
+<main>
+
+<section id="login" class="page active">
+  <div class="login card">
+    <h1>تسجيل الدخول</h1>
+    <div class="sub">أدخل اسم المستخدم وكلمة المرور اللذين أنشأهما لك مدير النظام.</div>
+    <div id="loginError" class="notice" style="display:none;background:#fde6e6;border-color:#f2b8b8"></div>
+    <div><label>اسم المستخدم</label><input id="loginUsername" autocomplete="username"></div>
+    <div style="margin-top:10px"><label>كلمة المرور</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+    <div class="actions"><button class="btn primary" id="loginBtn">دخول</button></div>
+  </div>
+</section>
+
+<section id="dashboard" class="page">
+<h1>لوحة التحكم</h1><div class="sub">متابعة دورة المبايعات من الإنشاء حتى الاعتماد المالي.</div>
+<div class="stats" id="stats"></div>
+<div class="card"><h2>آخر المبايعات</h2><div class="table-wrap"><table><thead><tr><th>رقم العقد</th><th>العميل</th><th>السيارة</th><th>الإجمالي</th><th>الحالة</th></tr></thead><tbody id="recent"></tbody></table></div></div>
+</section>
+
+<section id="newSale" class="page">
+<h1>إنشاء مبايعة جديدة</h1><div class="sub">أدخل البيانات مرة واحدة، وسيقوم النظام بتوليد العقد تلقائيًا.</div>
+<form id="saleForm" class="card">
+<div class="section-title">بيانات العميل</div>
+<div class="grid">
+<div><label>اسم العميل *</label><input name="customer_name" required></div>
+<div><label>رقم الهوية / الإقامة *</label><input name="customer_id" required></div>
+<div><label>رقم الجوال *</label><input name="customer_phone" required></div>
+<div><label>العنوان</label><input name="customer_address"></div>
+<div><label>البريد الإلكتروني</label><input name="customer_email"></div>
+</div>
+<div class="section-title">بيانات السيارة</div>
+<div class="grid">
+<div><label>نوع السيارة *</label><input name="make" required></div>
+<div><label>الفئة</label><input name="trim"></div>
+<div><label>الموديل *</label><input name="model" required></div>
+<div><label>سنة الصنع</label><input name="year"></div>
+<div><label>اللون</label><input name="color"></div>
+<div><label>رقم اللوحة</label><input name="plate"></div>
+<div><label>رقم الهيكل VIN *</label><input name="vin" required></div>
+<div><label>قراءة العداد</label><input name="odometer"></div>
+<div><label>الموقع</label><input name="location"></div>
+</div>
+<div class="section-title">تفاصيل المبايعة والسداد</div>
+<div class="grid">
+<div><label>سعر البيع قبل الضريبة</label><input name="price" type="number" min="0" step="0.01" value="0"></div>
+<div><label>الخصم</label><input name="discount" type="number" min="0" step="0.01" value="0"></div>
+<div><label>الضريبة</label><input name="tax" type="number" min="0" step="0.01" value="0"></div>
+<div><label>العربون</label><input name="deposit" type="number" min="0" step="0.01" value="0"></div>
+<div><label>المدفوع</label><input name="paid" type="number" min="0" step="0.01" value="0"></div>
+<div><label>طريقة السداد</label><select name="payment_method"><option>POS</option><option>تحويل بنكي</option><option>نقدي</option><option>تمويل</option></select></div>
+<div><label>جهة التمويل</label><input name="financier"></div>
+<div><label>موعد التسليم</label><input name="delivery_date" type="date"></div>
+</div>
+<div class="notice"><b>تنبيه POS:</b> إذا كانت طريقة السداد POS ولم تصل العملية إلى حساب المنشأة أو رجعت إلى حساب العميل، يظهر في العقد تعهد إلزام العميل بإعادة تحويل المبلغ خلال 48 ساعة من تاريخ ثبوت رجوعه.</div>
+<div class="section-title">الحالة والملاحظات</div>
+<div class="grid2"><div><label>حالة السيارة / ملاحظات الفحص</label><textarea name="condition_notes"></textarea></div><div><label>تفاصيل إضافية</label><textarea name="notes"></textarea></div></div>
+<div class="check"><input type="checkbox" id="declaration" required><label for="declaration" style="margin:0">أقر بأن البيانات المدخلة مطابقة للمستندات واتفاق البيع.</label></div>
+<div class="actions"><button class="btn primary" type="submit">حفظ المبايعة وإنشاء العقد</button><button class="btn secondary" type="reset">مسح</button></div>
+</form>
+</section>
+
+<section id="sales" class="page">
+<h1>المبايعات</h1><div class="sub">بحث ومتابعة جميع العقود.</div>
+<div class="card"><input id="search" placeholder="ابحث برقم العقد أو اسم العميل أو VIN"></div>
+<div class="table-wrap"><table><thead><tr><th>رقم العقد</th><th>العميل</th><th>السيارة</th><th>الإجمالي</th><th>المنشئ</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="salesTable"></tbody></table></div>
+</section>
+
+<section id="approvals" class="page">
+<h1>الاعتمادات</h1><div class="sub">المرحلة التالية تتحدد تلقائيًا حسب صلاحية المستخدم.</div>
+<div class="card" id="approvalBox">اختر عقدًا من قائمة المبايعات.</div>
+</section>
+
+<section id="users" class="page">
+<h1>إدارة المستخدمين</h1><div class="sub">إنشاء وتعطيل حسابات المناديب والمشرفين والمدراء والمحاسبين.</div>
+<div class="card">
+<div class="section-title">إضافة مستخدم جديد</div>
+<form id="userForm" class="grid2">
+<div><label>الاسم</label><input name="name" required></div>
+<div><label>اسم المستخدم</label><input name="username" required></div>
+<div><label>كلمة المرور (٨ أحرف فأكثر)</label><input name="password" type="password" minlength="8" required></div>
+<div><label>الدور</label>
+<select name="role" required>
+<option value="sales_rep">مندوب مبيعات</option>
+<option value="branch_supervisor">مشرف فرع</option>
+<option value="sales_manager">مدير مبيعات</option>
+<option value="accountant">محاسب</option>
+<option value="admin">مدير نظام</option>
+</select></div>
+<div><label>الفرع</label><input name="branch"></div>
+</form>
+<div class="actions"><button class="btn primary" id="addUserBtn">إضافة المستخدم</button></div>
+</div>
+<div class="table-wrap"><table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>الدور</th><th>الفرع</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+</section>
+
+<section id="audit" class="page">
+<h1>سجل التدقيق</h1><div class="sub">سجل كامل لكل الإجراءات: إنشاء، اعتماد، رفض، تسجيل دخول.</div>
+<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المستخدم</th><th>الإجراء</th><th>رقم المبايعة</th><th>تفاصيل</th></tr></thead><tbody id="auditTable"></tbody></table></div>
+</section>
+
+<section id="settings" class="page">
+<h1>الإعدادات</h1><div class="card">
+<h2>عن النظام</h2>
+<p>نظام إنتاجي متصل بقاعدة بيانات حقيقية، بصلاحيات وتسجيل دخول فعلي وسجل تدقيق كامل لكل إجراء.</p>
+<ul><li>المندوب: إنشاء المبايعة، وتعديلها فقط إذا رجعت له مرفوضة.</li><li>مشرف الفرع: اعتماد أو رفض المبايعات الجديدة.</li><li>مدير المبيعات: اعتماد أو رفض بعد المشرف.</li><li>المحاسب: الاعتماد المالي النهائي بعد اكتمال الاعتمادات.</li><li>مدير النظام: إدارة المستخدمين ومراجعة سجل التدقيق.</li></ul>
+<div class="actions"><button class="btn secondary" id="changePwBtn">تغيير كلمة المرور</button></div>
+</div>
+</section>
+
+<section id="printContract" class="page print-page">
+<div id="contractContent" class="contract"></div>
+</section>
+
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
