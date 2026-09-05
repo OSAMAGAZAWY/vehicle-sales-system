@@ -18,12 +18,17 @@ router.use(verifyToken);
    1) بحث برقم الهيكل
 ============================ */
 router.get('/search', async (req, res) => {
-  const q = (req.query.q || '').trim();
+  const q = (req.query.q || '').trim().toUpperCase();
   if (!q || q.length < 3) return res.json([]);
+
   const result = await pool.query(
-    `SELECT * FROM vehicles WHERE TRIM(vin) ILIKE $1 ORDER BY updated_at DESC LIMIT 15`,
+    `SELECT * FROM vehicles 
+     WHERE UPPER(TRIM(vin)) LIKE $1 
+     ORDER BY updated_at DESC 
+     LIMIT 15`,
     [`%${q}%`]
   );
+
   res.json(result.rows);
 });
 
@@ -31,7 +36,9 @@ router.get('/search', async (req, res) => {
    2) عرض المخزون كامل
 ============================ */
 router.get('/', requireRole('admin'), async (req, res) => {
-  const result = await pool.query('SELECT * FROM vehicles ORDER BY updated_at DESC LIMIT 500');
+  const result = await pool.query(
+    'SELECT * FROM vehicles ORDER BY updated_at DESC LIMIT 500'
+  );
   res.json(result.rows);
 });
 
@@ -71,7 +78,8 @@ router.post('/import', requireRole('admin'), upload.single('file'), async (req, 
   let inserted = 0, skipped = 0;
 
   for (const row of rows) {
-   const vin = String(row.vin || row.VIN || '').trim().toUpperCase();
+    let vin = String(row.vin || row.VIN || '').trim().toUpperCase();
+    if (!vin) { skipped++; continue; }
 
     try {
       await pool.query(
@@ -116,6 +124,8 @@ router.post('/add', requireRole('admin'), async (req, res) => {
     return res.status(400).json({ error: 'رقم الهيكل، الشركة، والموديل مطلوبة' });
   }
 
+  const VIN = vin.trim().toUpperCase();
+
   try {
     const result = await pool.query(
       `INSERT INTO vehicles (vin, make, trim, model, year, color, plate, odometer, location, price, updated_at)
@@ -125,7 +135,7 @@ router.post('/add', requireRole('admin'), async (req, res) => {
          odometer=$8, location=$9, price=$10, updated_at=now()
        RETURNING *`,
       [
-        vin.trim(),
+        VIN,
         make || '',
         trim || '',
         model || '',
@@ -159,7 +169,7 @@ router.post('/bulk', requireRole('admin'), async (req, res) => {
   let skipped = 0;
 
   for (const v of vehicles) {
-    const vin = String(v.vin || '').trim();
+    const vin = String(v.vin || '').trim().toUpperCase();
     if (!vin || !v.make || !v.model) {
       skipped++;
       continue;
