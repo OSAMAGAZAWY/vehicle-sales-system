@@ -20,12 +20,10 @@ router.use(verifyToken);
 router.get('/search', async (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q || q.length < 3) return res.json([]);
-
   const result = await pool.query(
-    `SELECT * FROM vehicles WHERE vin ILIKE $1 ORDER BY updated_at DESC LIMIT 15`,
+    `SELECT * FROM vehicles WHERE TRIM(vin) ILIKE $1 ORDER BY updated_at DESC LIMIT 15`,
     [`%${q}%`]
   );
-
   res.json(result.rows);
 });
 
