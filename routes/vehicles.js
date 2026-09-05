@@ -71,8 +71,7 @@ router.post('/import', requireRole('admin'), upload.single('file'), async (req, 
   let inserted = 0, skipped = 0;
 
   for (const row of rows) {
-    const vin = String(row.vin || row.VIN || '').trim();
-    if (!vin) { skipped++; continue; }
+   const vin = String(row.vin || row.VIN || '').trim().toUpperCase();
 
     try {
       await pool.query(
