@@ -33,9 +33,7 @@ router.get('/search', async (req, res) => {
    2) عرض المخزون كامل
 ============================ */
 router.get('/', requireRole('admin'), async (req, res) => {
-  const result = await pool.query(
-    'SELECT * FROM vehicles ORDER BY updated_at DESC LIMIT 500'
-  );
+  const result = await pool.query('SELECT * FROM vehicles ORDER BY updated_at DESC LIMIT 500');
   res.json(result.rows);
 });
 
