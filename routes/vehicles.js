@@ -78,17 +78,12 @@ router.post('/import', requireRole('admin'), upload.single('file'), async (req, 
   let inserted = 0, skipped = 0;
 
   for (const row of rows) {
-    let vin = String(row.vin || row.VIN || '').trim().toUpperCase();
-    if (!vin) { skipped++; continue; }
+  let vin = String(
+  row.vin || row.VIN || row['Vin Number'] || row['رقم الهيكل'] || row['VIN Number'] || ''
+).trim().toUpperCase();
 
-    try {
-      await pool.query(
-        `INSERT INTO vehicles (vin, make, trim, model, year, color, plate, odometer, location, price, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
-         ON CONFLICT (vin) DO UPDATE SET
-           make=$2, trim=$3, model=$4, year=$5, color=$6, plate=$7,
-           odometer=$8, location=$9, price=$10, updated_at=now()`,
-        [
+  await pool.query('UPDATE vehicles SET vin = UPPER(TRIM(vin)) WHERE vin IS NOT NULL AND vin <> \'\'');
+
           vin,
           row.make || '',
           row.trim || '',
