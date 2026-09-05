@@ -109,4 +109,51 @@ router.post('/add', requireRole('admin'), async (req, res) => {
     res.status(500).json({ error: 'خطأ أثناء حفظ السيارة' });
   }
 });
+// إضافة مجموعة سيارات دفعة واحدة - لمدير النظام فقط
+router.post('/bulk', requireRole('admin'), async (req, res) => {
+  const vehicles = req.body || [];
+
+  if (!Array.isArray(vehicles) || vehicles.length === 0) {
+    return res.status(400).json({ error: 'يجب إرسال قائمة سيارات' });
+  }
+
+  let inserted = 0;
+  let skipped = 0;
+
+  for (const v of vehicles) {
+    const vin = String(v.vin || '').trim();
+    if (!vin || !v.make || !v.model) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await pool.query(
+        `INSERT INTO vehicles (vin, make, trim, model, year, color, plate, odometer, location, price, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+         ON CONFLICT (vin) DO UPDATE SET
+           make=$2, trim=$3, model=$4, year=$5, color=$6, plate=$7,
+           odometer=$8, location=$9, price=$10, updated_at=now()`,
+        [
+          vin,
+          v.make || '',
+          v.trim || '',
+          v.model || '',
+          String(v.year || ''),
+          v.color || '',
+          v.plate || '',
+          String(v.odometer || ''),
+          v.location || '',
+          Number(v.price) || 0
+        ]
+      );
+      inserted++;
+    } catch (e) {
+      console.error(e);
+      skipped++;
+    }
+  }
+
+  res.json({ ok: true, inserted, skipped, total: vehicles.length });
+});
 
