@@ -68,3 +68,45 @@ router.post('/import', requireRole('admin'), upload.single('file'), async (req, 
 });
 
 module.exports = router;
+// إضافة سيارة جديدة دايركت - لمدير النظام فقط
+router.post('/add', requireRole('admin'), async (req, res) => {
+  const {
+    vin, make, trim, model, year,
+    color, plate, odometer, location, price
+  } = req.body || {};
+
+  // التحقق من الحقول الأساسية
+  if (!vin || !make || !model) {
+    return res.status(400).json({ error: 'رقم الهيكل، الشركة، الموديل مطلوبة' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO vehicles (vin, make, trim, model, year, color, plate, odometer, location, price, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())
+       ON CONFLICT (vin) DO UPDATE SET
+         make=$2, trim=$3, model=$4, year=$5, color=$6, plate=$7,
+         odometer=$8, location=$9, price=$10, updated_at=now()
+       RETURNING *`,
+      [
+        vin.trim(),
+        make || '',
+        trim || '',
+        model || '',
+        String(year || ''),
+        color || '',
+        plate || '',
+        String(odometer || ''),
+        location || '',
+        Number(price) || 0
+      ]
+    );
+
+    res.json({ ok: true, vehicle: result.rows[0] });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'خطأ أثناء حفظ السيارة' });
+  }
+});
+
