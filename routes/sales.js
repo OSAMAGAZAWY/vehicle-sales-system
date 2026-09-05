@@ -5,14 +5,15 @@ const { verifyToken, requireRole } = require('../middleware/auth');
 const router = express.Router();
 router.use(verifyToken);
 
-const STAGE_ORDER = ['new', 'supervisor', 'manager', 'accounting'];
-const NEXT_STATUS = { supervisor: 'supervisor', manager: 'manager', accounting: 'accounting' };
+// دورة الاعتماد بعد التعديل: مندوب ينشئ -> مشرف الفرع يعتمد -> المحاسب يعتمد نهائياً.
+// مدير المبيعات أصبح دوره إشرافي (مشاهدة فقط لكل المبايعات وسجل التدقيق)، وليس جزءاً من سلسلة الاعتماد.
+const STAGE_ORDER = ['new', 'manager', 'accounting'];
+const NEXT_STATUS = { supervisor: 'manager', accounting: 'accounting' };
 const APPROVER_ROLE_FOR_STAGE = {
   new: 'branch_supervisor',       // من يعتمد وهي بحالة "new" -> مشرف الفرع
-  supervisor: 'sales_manager',    // من يعتمد وهي بحالة "supervisor" -> مدير المبيعات
-  manager: 'accountant'           // من يعتمد وهي بحالة "manager" -> المحاسب
+  manager: 'accountant'           // من يعتمد وهي بحالة "manager" (بانتظار المحاسب) -> المحاسب
 };
-const STAGE_NAME_FOR_STATUS = { new: 'supervisor', supervisor: 'manager', manager: 'accounting' };
+const STAGE_NAME_FOR_STATUS = { new: 'supervisor', manager: 'accounting' };
 
 async function nextSaleNumber() {
   const year = new Date().getFullYear();
@@ -38,12 +39,10 @@ router.post('/', requireRole('sales_rep'), async (req, res) => {
   for (const f of required) {
     if (!b[f]) return res.status(400).json({ error: `الحقل مطلوب: ${f}` });
   }
-  const price = Number(b.price) || 0;
-  const discount = Number(b.discount) || 0;
-  const tax = Number(b.tax) || 0;
+  // price يُدخل كإجمالي شامل الضريبة ورسوم اللوحات مباشرة (بدون خصم/ضريبة منفصلة)
+  const gross = Number(b.price) || 0;
   const deposit = Number(b.deposit) || 0;
   const paid = Number(b.paid) || 0;
-  const gross = Math.max(0, price - discount) + tax;
   const remaining = Math.max(0, gross - paid);
   const saleNumber = await nextSaleNumber();
 
@@ -51,13 +50,13 @@ router.post('/', requireRole('sales_rep'), async (req, res) => {
     `INSERT INTO sales (sale_number, customer_name, customer_id, customer_phone, customer_address, customer_email,
       make, trim, model, year, color, plate, vin, odometer, location,
       price, discount, tax, deposit, paid, gross, remaining, payment_method, financier, delivery_date,
-      condition_notes, notes, status, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,'new',$28)
+      condition_notes, notes, branch, status, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,0,0,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,'new',$27)
      RETURNING *`,
     [saleNumber, b.customer_name, b.customer_id, b.customer_phone, b.customer_address || null, b.customer_email || null,
      b.make, b.trim || null, b.model, b.year || null, b.color || null, b.plate || null, b.vin, b.odometer || null, b.location || null,
-     price, discount, tax, deposit, paid, gross, remaining, b.payment_method || 'POS', b.financier || null, b.delivery_date || null,
-     b.condition_notes || null, b.notes || null, req.user.id]
+     gross, deposit, paid, gross, remaining, b.payment_method || 'POS', b.financier || null, b.delivery_date || null,
+     b.condition_notes || null, b.notes || null, req.user.branch || null, req.user.id]
   );
   const sale = result.rows[0];
   await logAudit(req.user.id, sale.id, 'create', { sale_number: sale.sale_number });
@@ -167,24 +166,22 @@ router.post('/:id/resubmit', requireRole('sales_rep'), async (req, res) => {
   if (sale.status !== 'rejected') return res.status(400).json({ error: 'يمكن إعادة الإرسال فقط للمبايعات المرفوضة' });
 
   const b = req.body || {};
-  const price = Number(b.price ?? sale.price);
-  const discount = Number(b.discount ?? sale.discount);
-  const tax = Number(b.tax ?? sale.tax);
+  const gross = Number(b.price ?? sale.gross);
+  const deposit = Number(b.deposit ?? sale.deposit);
   const paid = Number(b.paid ?? sale.paid);
-  const gross = Math.max(0, price - discount) + tax;
   const remaining = Math.max(0, gross - paid);
 
   await pool.query(
     `UPDATE sales SET customer_name=$1, customer_id=$2, customer_phone=$3, customer_address=$4, customer_email=$5,
      make=$6, trim=$7, model=$8, year=$9, color=$10, plate=$11, vin=$12, odometer=$13, location=$14,
-     price=$15, discount=$16, tax=$17, deposit=$18, paid=$19, gross=$20, remaining=$21, payment_method=$22,
-     financier=$23, delivery_date=$24, condition_notes=$25, notes=$26, status='new', reject_reason=NULL, updated_at=now()
-     WHERE id=$27`,
+     price=$15, discount=0, tax=0, deposit=$16, paid=$17, gross=$18, remaining=$19, payment_method=$20,
+     financier=$21, delivery_date=$22, condition_notes=$23, notes=$24, status='new', reject_reason=NULL, updated_at=now()
+     WHERE id=$25`,
     [b.customer_name ?? sale.customer_name, b.customer_id ?? sale.customer_id, b.customer_phone ?? sale.customer_phone,
      b.customer_address ?? sale.customer_address, b.customer_email ?? sale.customer_email,
      b.make ?? sale.make, b.trim ?? sale.trim, b.model ?? sale.model, b.year ?? sale.year, b.color ?? sale.color,
      b.plate ?? sale.plate, b.vin ?? sale.vin, b.odometer ?? sale.odometer, b.location ?? sale.location,
-     price, discount, tax, Number(b.deposit ?? sale.deposit), paid, gross, remaining,
+     gross, deposit, paid, gross, remaining,
      b.payment_method ?? sale.payment_method, b.financier ?? sale.financier, b.delivery_date ?? sale.delivery_date,
      b.condition_notes ?? sale.condition_notes, b.notes ?? sale.notes, sale.id]
   );

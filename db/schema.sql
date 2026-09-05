@@ -40,12 +40,16 @@ CREATE TABLE IF NOT EXISTS sales (
   delivery_date DATE,
   condition_notes TEXT,
   notes TEXT,
+  branch TEXT,
   status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','supervisor','manager','accounting','rejected')),
   reject_reason TEXT,
   created_by INTEGER NOT NULL REFERENCES users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ثبات: لو الجدول كان موجود من قبل بدون عمود الفرع
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS branch TEXT;
 
 CREATE TABLE IF NOT EXISTS approvals (
   id SERIAL PRIMARY KEY,
@@ -67,6 +71,36 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- بيانات الشركة الثابتة (سطر واحد فقط)
+CREATE TABLE IF NOT EXISTS company_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  company_name TEXT NOT NULL DEFAULT 'اسم المنشأة',
+  cr_number TEXT,
+  tax_number TEXT,
+  address TEXT,
+  phone TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT company_settings_single_row CHECK (id = 1)
+);
+INSERT INTO company_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- مخزون السيارات (يُرفع من ملف إكسل) للبحث برقم الهيكل عند إنشاء مبايعة
+CREATE TABLE IF NOT EXISTS vehicles (
+  vin TEXT PRIMARY KEY,
+  make TEXT,
+  trim TEXT,
+  model TEXT,
+  year TEXT,
+  color TEXT,
+  plate TEXT,
+  odometer TEXT,
+  location TEXT,
+  price NUMERIC(14,2),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_sales_status ON sales(status);
 CREATE INDEX IF NOT EXISTS idx_sales_created_by ON sales(created_by);
 CREATE INDEX IF NOT EXISTS idx_audit_sale ON audit_log(sale_id);
+CREATE INDEX IF NOT EXISTS idx_vehicles_vin ON vehicles(vin);
+

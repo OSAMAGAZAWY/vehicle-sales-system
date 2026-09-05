@@ -19,6 +19,7 @@
     <button data-page="sales">المبايعات</button>
     <button data-page="approvals">الاعتمادات</button>
     <button data-page="users" id="navUsers">المستخدمون</button>
+    <button data-page="inventory" id="navInventory">مخزون السيارات</button>
     <button data-page="audit" id="navAudit">سجل التدقيق</button>
     <button data-page="settings">الإعدادات</button>
   </div>
@@ -54,6 +55,11 @@
 <div><label>البريد الإلكتروني</label><input name="customer_email"></div>
 </div>
 <div class="section-title">بيانات السيارة</div>
+<div class="card" style="background:#eef5fb;border:1px dashed #9dc3e2;margin-bottom:14px">
+<label>ابحث برقم الهيكل (VIN) في مخزون السيارات لملء البيانات تلقائياً</label>
+<input id="vinSearch" placeholder="اكتب 3 أحرف على الأقل من رقم الهيكل...">
+<div id="vinResults" style="margin-top:8px"></div>
+</div>
 <div class="grid">
 <div><label>نوع السيارة *</label><input name="make" required></div>
 <div><label>الفئة</label><input name="trim"></div>
@@ -65,13 +71,12 @@
 <div><label>قراءة العداد</label><input name="odometer"></div>
 <div><label>الموقع</label><input name="location"></div>
 </div>
-<div class="section-title">تفاصيل المبايعة والسداد</div>
+<div class="section-title">تفاصيل السداد</div>
 <div class="grid">
-<div><label>سعر البيع قبل الضريبة</label><input name="price" type="number" min="0" step="0.01" value="0"></div>
-<div><label>الخصم</label><input name="discount" type="number" min="0" step="0.01" value="0"></div>
-<div><label>الضريبة</label><input name="tax" type="number" min="0" step="0.01" value="0"></div>
-<div><label>العربون</label><input name="deposit" type="number" min="0" step="0.01" value="0"></div>
-<div><label>المدفوع</label><input name="paid" type="number" min="0" step="0.01" value="0"></div>
+<div><label>إجمالي سعر البيع (شامل الضريبة ورسوم اللوحات) *</label><input name="price" id="priceInput" type="number" min="0" step="0.01" value="0" required></div>
+<div><label>العربون</label><input name="deposit" id="depositInput" type="number" min="0" step="0.01" value="0"></div>
+<div><label>المبلغ المدفوع</label><input name="paid" id="paidInput" type="number" min="0" step="0.01" value="0"></div>
+<div><label>المبلغ المتبقي (تلقائي)</label><input id="remainingDisplay" type="text" readonly value="0.00"></div>
 <div><label>طريقة السداد</label><select name="payment_method"><option>POS</option><option>تحويل بنكي</option><option>نقدي</option><option>تمويل</option></select></div>
 <div><label>جهة التمويل</label><input name="financier"></div>
 <div><label>موعد التسليم</label><input name="delivery_date" type="date"></div>
@@ -93,6 +98,21 @@
 <section id="approvals" class="page">
 <h1>الاعتمادات</h1><div class="sub">المرحلة التالية تتحدد تلقائيًا حسب صلاحية المستخدم.</div>
 <div class="card" id="approvalBox">اختر عقدًا من قائمة المبايعات.</div>
+</section>
+
+<section id="inventory" class="page">
+<h1>مخزون السيارات</h1><div class="sub">ملف إكسل واحد يحتوي بيانات كل السيارات المتاحة — يستخدمه المندوب للبحث برقم الهيكل بدل الكتابة اليدوية.</div>
+<div class="card">
+<div class="section-title">رفع / تحديث الملف</div>
+<p class="muted">الأعمدة المطلوبة بالترتيب: vin, make, trim, model, year, color, plate, odometer, location, price. رفع نفس رقم الهيكل مرة أخرى يحدّث بياناته تلقائياً.</p>
+<div class="actions">
+<button class="btn secondary" id="downloadTemplateBtn">تحميل نموذج فارغ (Excel)</button>
+<input type="file" id="vehicleFileInput" accept=".xlsx,.xls" style="display:none">
+<button class="btn primary" id="uploadVehiclesBtn">رفع ملف Excel</button>
+</div>
+<div id="importResult" class="notice" style="display:none"></div>
+</div>
+<div class="card"><h2>آخر السيارات في المخزون</h2><div class="table-wrap"><table><thead><tr><th>VIN</th><th>النوع</th><th>الموديل</th><th>السنة</th><th>اللون</th><th>السعر</th><th>آخر تحديث</th></tr></thead><tbody id="vehiclesTable"></tbody></table></div></div>
 </section>
 
 <section id="users" class="page">
@@ -124,10 +144,24 @@
 </section>
 
 <section id="settings" class="page">
-<h1>الإعدادات</h1><div class="card">
+<h1>الإعدادات</h1>
+
+<div class="card" id="companyCard" style="display:none">
+<h2>بيانات المنشأة (تظهر ثابتة في كل عقد)</h2>
+<form id="companyForm" class="grid2">
+<div><label>اسم المنشأة *</label><input name="company_name" required></div>
+<div><label>رقم السجل التجاري</label><input name="cr_number"></div>
+<div><label>الرقم الضريبي</label><input name="tax_number"></div>
+<div><label>العنوان</label><input name="address"></div>
+<div><label>رقم الهاتف</label><input name="phone"></div>
+</form>
+<div class="actions"><button class="btn primary" id="saveCompanyBtn">حفظ بيانات المنشأة</button></div>
+</div>
+
+<div class="card">
 <h2>عن النظام</h2>
 <p>نظام إنتاجي متصل بقاعدة بيانات حقيقية، بصلاحيات وتسجيل دخول فعلي وسجل تدقيق كامل لكل إجراء.</p>
-<ul><li>المندوب: إنشاء المبايعة، وتعديلها فقط إذا رجعت له مرفوضة.</li><li>مشرف الفرع: اعتماد أو رفض المبايعات الجديدة.</li><li>مدير المبيعات: اعتماد أو رفض بعد المشرف.</li><li>المحاسب: الاعتماد المالي النهائي بعد اكتمال الاعتمادات.</li><li>مدير النظام: إدارة المستخدمين ومراجعة سجل التدقيق.</li></ul>
+<ul><li>المندوب: إنشاء المبايعة، وتعديلها فقط إذا رجعت له مرفوضة.</li><li>مشرف الفرع: اعتماد أو رفض المبايعات الجديدة.</li><li>المحاسب: الاعتماد المالي النهائي مباشرة بعد اعتماد مشرف الفرع.</li><li>مدير المبيعات: دور إشرافي — يشاهد كل المبايعات وسجل التدقيق دون صلاحية اعتماد أو رفض.</li><li>مدير النظام: إدارة المستخدمين ومراجعة سجل التدقيق.</li></ul>
 <div class="actions"><button class="btn secondary" id="changePwBtn">تغيير كلمة المرور</button></div>
 </div>
 </section>

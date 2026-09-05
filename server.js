@@ -8,6 +8,8 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const salesRoutes = require('./routes/sales');
 const auditRoutes = require('./routes/audit');
+const companyRoutes = require('./routes/company');
+const vehiclesRoutes = require('./routes/vehicles');
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/company', companyRoutes);
+app.use('/api/vehicles', vehiclesRoutes);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
