@@ -1,0 +1,71 @@
+<%- include('../partials/header') %>
+
+<div class="panel">
+  <div class="section-title">
+    عقد رقم <%= contract.contract_number %>
+    <span class="badge badge-<%= contract.status %>">
+      <%= contract.status === 'pending' ? 'بانتظار الموافقة' : (contract.status === 'approved' ? 'معتمد' : 'مرفوض') %>
+    </span>
+  </div>
+
+  <div class="grid">
+    <div>
+      <h3 style="color:var(--navy); font-size:.95rem;">بيانات العميل</h3>
+      <p style="font-size:.88rem; line-height:2;">
+        الاسم: <%= contract.customer_name %><br>
+        الهوية: <%= contract.customer_id_number || '—' %><br>
+        الجنسية: <%= contract.customer_nationality || '—' %><br>
+        الجوال: <%= contract.customer_phone || '—' %><br>
+        العنوان: <%= contract.customer_address || '—' %>
+      </p>
+    </div>
+    <div>
+      <h3 style="color:var(--navy); font-size:.95rem;">بيانات السيارة</h3>
+      <p style="font-size:.88rem; line-height:2;">
+        الهيكل: <span class="chassis-tag"><%= contract.chassis %></span><br>
+        الماركة/الموديل: <%= [contract.make, contract.model].filter(Boolean).join(' ') || '—' %><br>
+        السنة: <%= contract.year || '—' %> — اللون: <%= contract.color || '—' %><br>
+        اللوحة: <%= contract.plate || '—' %><br>
+        السعر النهائي: <%= contract.final_price ? Number(contract.final_price).toLocaleString('ar-SA') + ' ر.س' : '—' %>
+        — الدفع: <%= contract.payment_method || '—' %>
+      </p>
+    </div>
+  </div>
+
+  <h3 style="color:var(--navy); font-size:.95rem;">الشروط والأحكام</h3>
+  <p style="font-size:.86rem; line-height:1.9; white-space:pre-line;"><%= contract.terms_text %></p>
+
+  <p style="font-size:.8rem; color:var(--ink-soft);">
+    أنشأه: <%= contract.created_by_name %>
+    <% if (contract.approved_by_name) { %> — راجعه: <%= contract.approved_by_name %><% } %>
+    <% if (contract.status === 'rejected' && contract.rejection_reason) { %>
+      <br>سبب الرفض: <%= contract.rejection_reason %>
+    <% } %>
+  </p>
+
+  <div class="actions">
+    <% if (isAdmin && contract.status === 'pending') { %>
+      <form method="POST" action="/contracts/<%= contract.id %>/approve" style="display:inline">
+        <button class="btn-primary" type="submit">اعتماد العقد</button>
+      </form>
+      <form method="POST" action="/contracts/<%= contract.id %>/reject" style="display:inline" onsubmit="return promptReason(this);">
+        <input type="hidden" name="reason" class="reasonField">
+        <button class="btn-danger" type="submit">رفض العقد</button>
+      </form>
+    <% } %>
+    <% if (contract.status === 'approved') { %>
+      <a class="btn btn-brass" href="/contracts/<%= contract.id %>/print" target="_blank">طباعة العقد المعتمد</a>
+    <% } %>
+    <a class="btn btn-ghost" href="/contracts">رجوع لقائمة العقود</a>
+  </div>
+</div>
+
+<script>
+function promptReason(form) {
+  const reason = prompt('سبب الرفض (اختياري):') || '';
+  form.querySelector('.reasonField').value = reason;
+  return true;
+}
+</script>
+
+<%- include('../partials/footer') %>

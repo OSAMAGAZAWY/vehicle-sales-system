@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+
+<div class="panel">
+  <div class="section-title">إضافة سيارة يدويًا <a class="btn btn-ghost btn-sm" href="/cars">رجوع لقائمة المخزون</a></div>
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <form method="POST" action="/cars">
+    <div class="grid cols-3">
+      <div class="field"><label>رقم الهيكل (VIN) كاملاً</label><input name="chassis" required></div>
+      <div class="field"><label>الماركة</label><input name="make"></div>
+      <div class="field"><label>الموديل</label><input name="model"></div>
+      <div class="field"><label>سنة الصنع</label><input name="year"></div>
+      <div class="field"><label>اللون</label><input name="color"></div>
+      <div class="field"><label>رقم اللوحة</label><input name="plate"></div>
+      <div class="field"><label>السعر (ر.س)</label><input name="price" type="number" step="0.01"></div>
+      <div class="field" style="grid-column:span 2"><label>ملاحظات</label><input name="notes"></div>
+    </div>
+    <div class="actions"><button class="btn-brass" type="submit">إضافة السيارة</button></div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

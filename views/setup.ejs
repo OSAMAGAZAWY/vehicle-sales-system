@@ -1,0 +1,37 @@
+<%- include('partials/header') %>
+
+<div class="login-wrap">
+  <h1>إعداد حساب المدير الأول</h1>
+
+  <% if (alreadyDone) { %>
+    <div class="alert alert-success">تم إعداد النظام مسبقًا. الرجاء تسجيل الدخول من <a href="/login">هنا</a>.</div>
+  <% } else { %>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <form method="POST" action="/setup">
+      <div class="field">
+        <label>رمز الإعداد (Setup Token)</label>
+        <input name="token" required>
+      </div>
+      <div class="field">
+        <label>اسم المدير الكامل</label>
+        <input name="full_name" required>
+      </div>
+      <div class="field">
+        <label>اسم المستخدم</label>
+        <input name="username" required>
+      </div>
+      <div class="field">
+        <label>كلمة المرور</label>
+        <input name="password" type="password" required>
+      </div>
+      <div class="actions">
+        <button class="btn-primary" type="submit" style="width:100%">إنشاء حساب المدير</button>
+      </div>
+    </form>
+    <p style="font-size:.8rem;color:var(--ink-soft);margin-top:16px;">
+      رمز الإعداد موجود في متغير البيئة SETUP_TOKEN على السيرفر — هذه الصفحة تعمل مرة واحدة فقط قبل إنشاء أول مستخدم.
+    </p>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+
+<div class="panel">
+  <div class="section-title">
+    مخزون السيارات
+    <a class="btn btn-brass btn-sm" href="/cars/new">+ إضافة سيارة يدويًا</a>
+  </div>
+
+  <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <% if (typeof message !== 'undefined' && message) { %><div class="alert alert-success"><%= message %></div><% } %>
+
+  <form method="GET" action="/cars" class="grid" style="margin-bottom:18px;">
+    <div class="field">
+      <label>بحث بآخر أرقام الهيكل</label>
+      <input name="q" value="<%= q %>" placeholder="مثال: 3456">
+    </div>
+    <div class="field" style="align-self:flex-end;">
+      <button class="btn-primary" type="submit">بحث</button>
+    </div>
+  </form>
+
+  <div class="section-title" style="border:none;">استيراد المخزون من ملف إكسل</div>
+  <form method="POST" action="/cars/import" enctype="multipart/form-data" class="grid">
+    <div class="field">
+      <label>اختر ملف الإكسل (بنفس أعمدة القالب)</label>
+      <input type="file" name="file" accept=".xlsx,.xls" required>
+    </div>
+    <div class="field" style="align-self:flex-end; display:flex; gap:10px;">
+      <button class="btn-brass" type="submit">رفع واستيراد</button>
+      <a class="btn btn-ghost" href="/cars/template">تحميل قالب الإكسل</a>
+    </div>
+  </form>
+
+  <div class="section-title" style="margin-top:10px;">قائمة السيارات (<%= cars.length %>)</div>
+  <% if (!cars.length) { %>
+    <div class="empty-hint">لا توجد سيارات مطابقة.</div>
+  <% } else { %>
+    <table class="data">
+      <thead>
+        <tr><th>الهيكل</th><th>الماركة/الموديل</th><th>السنة</th><th>اللون</th><th>اللوحة</th><th>السعر</th><th>الحالة</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% cars.forEach(c => { %>
+          <tr>
+            <td><span class="chassis-tag"><%= c.chassis %></span></td>
+            <td><%= [c.make, c.model].filter(Boolean).join(' ') || '—' %></td>
+            <td><%= c.year || '—' %></td>
+            <td><%= c.color || '—' %></td>
+            <td><%= c.plate || '—' %></td>
+            <td><%= c.price ? Number(c.price).toLocaleString('ar-SA') + ' ر.س' : '—' %></td>
+            <td><span class="badge badge-<%= c.status %>"><%= c.status === 'available' ? 'متاحة' : 'مباعة' %></span></td>
+            <td>
+              <% if (currentUser.role === 'admin') { %>
+                <form method="POST" action="/cars/<%= c.id %>/delete" style="display:inline" onsubmit="return confirm('تأكيد حذف هذه السيارة؟');">
+                  <button class="btn-danger btn-sm" type="submit">حذف</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

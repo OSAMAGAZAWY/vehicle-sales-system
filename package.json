@@ -1,0 +1,22 @@
+{
+  "name": "car-sale-system",
+  "version": "1.0.0",
+  "description": "نظام مبايعات السيارات - مستخدمين، موافقات، طباعة عقود، ورفع مخزون بملف إكسل",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.5",
+    "xlsx": "^0.18.5"
+  }
+}

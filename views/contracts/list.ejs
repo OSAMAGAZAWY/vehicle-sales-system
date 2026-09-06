@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+
+<div class="panel">
+  <div class="section-title">
+    العقود
+    <a class="btn btn-brass btn-sm" href="/contracts/new">+ عقد جديد</a>
+  </div>
+
+  <div class="field" style="max-width:260px;">
+    <label>تصفية حسب الحالة</label>
+    <select onchange="location.href = this.value ? '/contracts?status=' + this.value : '/contracts'">
+      <option value="">الكل</option>
+      <option value="pending" <%= statusFilter === 'pending' ? 'selected' : '' %>>بانتظار الموافقة</option>
+      <option value="approved" <%= statusFilter === 'approved' ? 'selected' : '' %>>معتمد</option>
+      <option value="rejected" <%= statusFilter === 'rejected' ? 'selected' : '' %>>مرفوض</option>
+    </select>
+  </div>
+
+  <% if (!contracts.length) { %>
+    <div class="empty-hint">لا توجد عقود بعد.</div>
+  <% } else { %>
+    <table class="data">
+      <thead>
+        <tr><th>رقم العقد</th><th>العميل</th><th>السيارة</th><th>الموظف</th><th>الحالة</th><th>التاريخ</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% contracts.forEach(c => { %>
+          <tr>
+            <td><%= c.contract_number %></td>
+            <td><%= c.customer_name %></td>
+            <td><span class="chassis-tag"><%= c.chassis %></span> <%= [c.make, c.model].filter(Boolean).join(' ') %></td>
+            <td><%= c.created_by_name %></td>
+            <td>
+              <span class="badge badge-<%= c.status %>">
+                <%= c.status === 'pending' ? 'بانتظار الموافقة' : (c.status === 'approved' ? 'معتمد' : 'مرفوض') %>
+              </span>
+            </td>
+            <td><%= new Date(c.created_at).toLocaleDateString('ar-SA') %></td>
+            <td><a class="btn btn-ghost btn-sm" href="/contracts/<%= c.id %>">عرض</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

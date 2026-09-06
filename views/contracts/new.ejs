@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+
+<div class="panel">
+  <div class="section-title">إنشاء عقد مبايعة جديد</div>
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+  <div class="section-title" style="border:none;">البحث عن السيارة (آخر أرقام الهيكل)</div>
+  <div class="field">
+    <label>أدخل آخر 4 إلى 6 أرقام/رموز من رقم الهيكل</label>
+    <input id="searchChassis" placeholder="مثال: 3456">
+  </div>
+  <div id="carFoundBox" class="alert alert-success" style="display:none;"></div>
+  <div id="noMatchBox" class="alert alert-error" style="display:none;">لا توجد سيارة متاحة مطابقة لهذه الأرقام في المخزون.</div>
+
+  <form method="POST" action="/contracts" id="contractForm">
+    <input type="hidden" name="car_id" id="car_id">
+
+    <div class="section-title" style="margin-top:10px;">بيانات العميل (المشتري)</div>
+    <div class="grid">
+      <div class="field"><label>اسم العميل</label><input name="customer_name" required></div>
+      <div class="field"><label>رقم الهوية / الإقامة</label><input name="customer_id_number"></div>
+      <div class="field"><label>الجنسية</label><input name="customer_nationality"></div>
+      <div class="field"><label>رقم الجوال</label><input name="customer_phone"></div>
+      <div class="field" style="grid-column:1/-1"><label>العنوان</label><input name="customer_address"></div>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">سعر البيع وطريقة الدفع</div>
+    <div class="grid">
+      <div class="field"><label>سعر البيع النهائي (ر.س)</label><input name="final_price" id="final_price" type="number" step="0.01"></div>
+      <div class="field">
+        <label>طريقة الدفع</label>
+        <select name="payment_method">
+          <option>نقدًا</option>
+          <option>تحويل بنكي</option>
+          <option>تمويل بنكي</option>
+          <option>دفعة مقدمة + أقساط</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>الشروط والأحكام (قابلة للتعديل)</label>
+      <textarea name="terms_text" rows="9"><%= defaultTerms %></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" type="submit" id="submitBtn" disabled>إنشاء العقد (سيُرسل لموافقة المدير)</button>
+    </div>
+  </form>
+</div>
+
+<script>
+let debounceTimer;
+document.getElementById('searchChassis').addEventListener('input', function () {
+  clearTimeout(debounceTimer);
+  const q = this.value.trim();
+  document.getElementById('carFoundBox').style.display = 'none';
+  document.getElementById('noMatchBox').style.display = 'none';
+  document.getElementById('car_id').value = '';
+  document.getElementById('submitBtn').disabled = true;
+  if (q.length < 3) return;
+
+  debounceTimer = setTimeout(() => {
+    fetch('/cars/api/search?q=' + encodeURIComponent(q))
+      .then(r => r.json())
+      .then(data => {
+        if (data.car) {
+          document.getElementById('car_id').value = data.car.id;
+          document.getElementById('carFoundBox').textContent =
+            'تم العثور على: ' + [data.car.make, data.car.model].filter(Boolean).join(' ') +
+            ' — هيكل: ' + data.car.chassis + ' — سنة ' + (data.car.year || '—') +
+            ' — لون ' + (data.car.color || '—') + ' — لوحة ' + (data.car.plate || '—');
+          document.getElementById('carFoundBox').style.display = 'block';
+          if (data.car.price) document.getElementById('final_price').value = data.car.price;
+          document.getElementById('submitBtn').disabled = false;
+        } else {
+          document.getElementById('noMatchBox').style.display = 'block';
+        }
+      });
+  }, 300);
+});
+</script>
+
+<%- include('../partials/footer') %>

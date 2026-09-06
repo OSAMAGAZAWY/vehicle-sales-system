@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>عقد مبايعة <%= contract.contract_number %></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="actions no-print">
+    <button class="btn-brass" onclick="window.print()">طباعة / حفظ PDF</button>
+  </div>
+
+  <div class="contract-preview">
+    <div class="cp-header">
+      <h2><%= settings.company_name || 'اسم الشركة' %></h2>
+      <div class="cp-sub"><%= [settings.address, settings.phone].filter(Boolean).join(' — ') %></div>
+    </div>
+
+    <div class="cp-meta">
+      <span>رقم العقد: <b><%= contract.contract_number %></b></span>
+      <span>التاريخ: <b><%= new Date(contract.approved_at || contract.created_at).toLocaleDateString('ar-SA') %></b></span>
+      <span>الفرع: <b><%= settings.branch || '—' %></b></span>
+    </div>
+
+    <div class="cp-block">
+      <h3>الطرف الأول (البائع)</h3>
+      <table class="cp-table">
+        <tr><td class="k">الشركة</td><td><%= settings.company_name || '—' %></td></tr>
+        <tr><td class="k">الموظف المسؤول</td><td><%= contract.employee_name %></td></tr>
+        <tr><td class="k">السجل التجاري</td><td><%= settings.cr_number || '—' %></td></tr>
+        <tr><td class="k">الرقم الضريبي</td><td><%= settings.vat_number || '—' %></td></tr>
+        <tr><td class="k">الهاتف</td><td><%= settings.phone || '—' %></td></tr>
+      </table>
+    </div>
+
+    <div class="cp-block">
+      <h3>الطرف الثاني (المشتري)</h3>
+      <table class="cp-table">
+        <tr><td class="k">الاسم</td><td><%= contract.customer_name %></td></tr>
+        <tr><td class="k">رقم الهوية</td><td><%= contract.customer_id_number || '—' %></td></tr>
+        <tr><td class="k">الجنسية</td><td><%= contract.customer_nationality || '—' %></td></tr>
+        <tr><td class="k">الجوال</td><td><%= contract.customer_phone || '—' %></td></tr>
+        <tr><td class="k">العنوان</td><td><%= contract.customer_address || '—' %></td></tr>
+      </table>
+    </div>
+
+    <div class="cp-block">
+      <h3>بيانات السيارة محل العقد</h3>
+      <table class="cp-table">
+        <tr><td class="k">رقم الهيكل</td><td><%= contract.chassis %></td></tr>
+        <tr><td class="k">الماركة / الموديل</td><td><%= [contract.make, contract.model].filter(Boolean).join(' ') || '—' %></td></tr>
+        <tr><td class="k">سنة الصنع</td><td><%= contract.year || '—' %></td></tr>
+        <tr><td class="k">اللون</td><td><%= contract.color || '—' %></td></tr>
+        <tr><td class="k">رقم اللوحة</td><td><%= contract.plate || '—' %></td></tr>
+        <tr><td class="k">سعر البيع</td><td><%= contract.final_price ? Number(contract.final_price).toLocaleString('ar-SA') + ' ر.س' : '—' %></td></tr>
+        <tr><td class="k">طريقة الدفع</td><td><%= contract.payment_method || '—' %></td></tr>
+      </table>
+    </div>
+
+    <div class="cp-block">
+      <h3>الشروط والأحكام</h3>
+      <div class="cp-terms">
+        <ol>
+          <% contract.terms_text.split('\n').filter(l => l.trim()).forEach(line => { %>
+            <li><%= line.replace(/^\d+\.\s*/, '') %></li>
+          <% }) %>
+        </ol>
+      </div>
+    </div>
+
+    <div class="cp-sign">
+      <div><div class="line">توقيع الطرف الأول (البائع)</div></div>
+      <div><div class="line">توقيع الطرف الثاني (المشتري)</div></div>
+    </div>
+
+    <p style="text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:26px;">
+      هذا العقد معتمد إلكترونيًا من إدارة الشركة بتاريخ <%= new Date(contract.approved_at).toLocaleDateString('ar-SA') %>
+    </p>
+  </div>
+</div>
+</body>
+</html>

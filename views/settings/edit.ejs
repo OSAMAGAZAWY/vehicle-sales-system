@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+
+<div class="panel">
+  <div class="section-title">بيانات الشركة والفرع</div>
+  <% if (saved) { %><div class="alert alert-success">تم حفظ البيانات بنجاح.</div><% } %>
+  <form method="POST" action="/settings">
+    <div class="grid">
+      <div class="field"><label>اسم الشركة</label><input name="company_name" value="<%= settings.company_name || '' %>"></div>
+      <div class="field"><label>رقم السجل التجاري</label><input name="cr_number" value="<%= settings.cr_number || '' %>"></div>
+      <div class="field"><label>الرقم الضريبي</label><input name="vat_number" value="<%= settings.vat_number || '' %>"></div>
+      <div class="field"><label>رقم الهاتف</label><input name="phone" value="<%= settings.phone || '' %>"></div>
+      <div class="field" style="grid-column:1/-1"><label>عنوان الشركة</label><input name="address" value="<%= settings.address || '' %>"></div>
+      <div class="field"><label>اسم الفرع</label><input name="branch" value="<%= settings.branch || '' %>"></div>
+    </div>
+    <div class="actions"><button class="btn-primary" type="submit">حفظ البيانات</button></div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

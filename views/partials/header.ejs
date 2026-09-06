@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام مبايعات السيارات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">نظام مبايعات السيارات<small>عقود بيع منظمة بموافقات ومخزون مركزي</small></div>
+    <% if (currentUser) { %>
+      <div class="user-chip">
+        <span><%= currentUser.full_name %> — <%= currentUser.role === 'admin' ? 'مدير' : 'موظف مبيعات' %></span>
+        <form action="/logout" method="POST"><button type="submit">تسجيل خروج</button></form>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (currentUser) { %>
+  <nav class="tabs">
+    <a href="/contracts" class="<%= currentPath.startsWith('/contracts') ? 'active' : '' %>">العقود</a>
+    <a href="/cars" class="<%= currentPath.startsWith('/cars') ? 'active' : '' %>">مخزون السيارات</a>
+    <% if (currentUser.role === 'admin') { %>
+      <a href="/users" class="<%= currentPath.startsWith('/users') ? 'active' : '' %>">المستخدمون</a>
+      <a href="/settings" class="<%= currentPath.startsWith('/settings') ? 'active' : '' %>">بيانات الشركة</a>
+    <% } %>
+  </nav>
+  <% } %>
